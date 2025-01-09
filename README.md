@@ -15,3 +15,4 @@
 TODO:
 * проперти в json/yml
 * засунуть все в докер
+* создание processed_events.txt по дням
