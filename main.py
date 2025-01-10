@@ -67,7 +67,7 @@ def expand_event(event, start_date, end_date):
     for occurrence in occurrences:
         result.append(datetime.combine(occurrence.date(), dtstart.time()))
 
-    print(f"Total events between {start_date} and {end_date}: {len(occurrences)}")
+    print(f"Event {event.name} occurrences between {start_date} and {end_date}: {len(occurrences)}")
     return result
 
 
@@ -75,7 +75,7 @@ def send_notification(event_name, chat_id):
     """Send a notification for the event."""
     payload = {"chat_id": chat_id, "text": event_name}
     try:
-        response = requests.post(WEBHOOK_URL, data=payload)
+        response = requests.post(WEBHOOK_URL, json=payload)
         return response.status_code
     except requests.RequestException as e:
         print(f"Error sending notification: {e}")
@@ -89,7 +89,7 @@ def process_events():
     processed_events = load_processed_events(PROCESSED_EVENTS_FILE)
     now = datetime.now()
     start_date = now - timedelta(days=1)
-    end_date = now
+    end_date = now + timedelta(days=1)
 
     for event in calendar.events:
         occurrences = expand_event(event, start_date, end_date)
@@ -99,7 +99,7 @@ def process_events():
             event_id = f"{event.name}_{event_start_str}"
 
             if event_start <= now <= event_end and event_id not in processed_events:
-                status_code = send_notification(event.name, CHAT_ID)
+                status_code = send_notification(event.name + f":\n{event.location}", CHAT_ID)
                 if status_code == 200:
                     save_processed_event(PROCESSED_EVENTS_FILE, event_id)
                 else:
