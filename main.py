@@ -81,7 +81,7 @@ def expand_event(event, start_date, end_date):
     for occurrence in occurrences:
         result.append(datetime.combine(occurrence.date(), dtstart.time()))
 
-    print(f"Event {event.name} occurrences between {start_date} and {end_date}: {len(occurrences)}")
+    print(f"Event '{event.name}' occurrences between {start_date} and {end_date}: {len(occurrences)}")
     return result
 
 
