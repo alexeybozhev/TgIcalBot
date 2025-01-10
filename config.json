@@ -1,0 +1,4 @@
+{
+  "WEBHOOK_URL": "https://api.telegram.org/{bot-token-here}/sendMessage",
+  "CHAT_ID": 1
+}

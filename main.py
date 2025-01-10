@@ -1,4 +1,6 @@
 import requests
+import json
+
 from ics import Calendar
 from datetime import datetime, timedelta
 from dateutil.rrule import rrulestr
@@ -9,9 +11,21 @@ CURRENT_DIRECTORY = Path(__file__).parent
 ICAL_FILE = CURRENT_DIRECTORY / 'events.ics'
 
 PROCESSED_EVENTS_FILE = CURRENT_DIRECTORY / "processed_events.txt"
-WEBHOOK_URL = "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage"
-CHAT_ID = 1 #CHAT_ID_HERE
 
+with open('config.json') as f:
+    config = json.load(f)
+
+def load_config_from_file(file_path):
+    with open(file_path, 'r') as f:
+        config = json.load(f)  # Чтение JSON из файла
+
+    webhook_url = config.get("WEBHOOK_URL")
+    chat_id = config.get("CHAT_ID")
+
+    return webhook_url, chat_id
+
+WEBHOOK_URL, CHAT_ID = load_config_from_file('config.json')
+print(f"WEBHOOK_URL: {WEBHOOK_URL}, CHAT_ID: {CHAT_ID}")
 
 def load_processed_events(file_path):
     """Load the set of processed event IDs from a file."""
@@ -101,6 +115,7 @@ def process_events():
             if event_start <= now <= event_end and event_id not in processed_events:
                 status_code = send_notification(event.name + f":\n{event.location}", CHAT_ID)
                 if status_code == 200:
+                    print(f"Success sending notification for event '{event.name}'")
                     save_processed_event(PROCESSED_EVENTS_FILE, event_id)
                 else:
                     print(f"Error sending notification for event '{event.name}': {status_code}")

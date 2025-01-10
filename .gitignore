@@ -118,4 +118,7 @@ dmypy.json
 # VSCode
 .vscode/
 
+config.json
+events.ics
+processed_events.txt
 # End of file
