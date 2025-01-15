@@ -8,11 +8,13 @@ from pathlib import Path
 
 # Constants
 CURRENT_DIRECTORY = Path(__file__).parent
-ICAL_FILE = CURRENT_DIRECTORY / 'events.ics'
+print(CURRENT_DIRECTORY)
 
+ICAL_FILE = CURRENT_DIRECTORY / 'events.ics'
+CONFIG_JSON = CURRENT_DIRECTORY / 'config.json'
 PROCESSED_EVENTS_FILE = CURRENT_DIRECTORY / "processed_events.txt"
 
-with open('config.json') as f:
+with open(CONFIG_JSON) as f:
     config = json.load(f)
 
 def load_config_from_file(file_path):
@@ -24,8 +26,10 @@ def load_config_from_file(file_path):
 
     return webhook_url, chat_id
 
-WEBHOOK_URL, CHAT_ID = load_config_from_file('config.json')
-print(f"WEBHOOK_URL: {WEBHOOK_URL}, CHAT_ID: {CHAT_ID}")
+
+WEBHOOK_URL, CHAT_ID = load_config_from_file(CONFIG_JSON)
+NOW = datetime.now()
+print(f"NOW: {NOW}, WEBHOOK_URL: {WEBHOOK_URL}, CHAT_ID: {CHAT_ID}")
 
 def load_processed_events(file_path):
     """Load the set of processed event IDs from a file."""
@@ -40,6 +44,7 @@ def save_processed_event(file_path, event_id):
     """Append a processed event ID to the file."""
     with open(file_path, "a") as f:
         f.write(event_id + "\n")
+        f.flush()
 
 
 def parse_rrule(event):
@@ -47,7 +52,6 @@ def parse_rrule(event):
     result_dict = {}
     for item in event.extra:
         result_dict[item.name] = item.value
-
     return result_dict, event.begin
 
 
@@ -69,6 +73,8 @@ def handle_exrule(exrule_value, events, dtstart, start_date, end_date):
 def expand_event(event, start_date, end_date):
     """Generate occurrences of a recurring event within a date range."""
     result_dict, dtstart = parse_rrule(event)
+    print(f"\nExpanding event '{event.name}': {event.begin}")
+
     if not result_dict:
         print(f"No RRULE found for event '{event.name}'. Skipping.")
         return []
@@ -79,9 +85,10 @@ def expand_event(event, start_date, end_date):
 
     result = list()
     for occurrence in occurrences:
-        result.append(datetime.combine(occurrence.date(), dtstart.time()))
+        print(f"Found occurrence: {occurrence}")
+        result.append(occurrence)
 
-    print(f"Event '{event.name}' occurrences between {start_date} and {end_date}: {len(occurrences)}")
+    print(f"Occurrences between {start_date} and {end_date}: {len(occurrences)}")
     return result
 
 
@@ -101,9 +108,9 @@ def process_events():
     calendar = open_calendar(ICAL_FILE)
 
     processed_events = load_processed_events(PROCESSED_EVENTS_FILE)
-    now = datetime.now()
-    start_date = now - timedelta(days=1)
-    end_date = now + timedelta(days=1)
+
+    start_date = datetime(NOW.year, NOW.month, NOW.day)
+    end_date = datetime(NOW.year, NOW.month, NOW.day, 23, 59, 59)
 
     for event in calendar.events:
         occurrences = expand_event(event, start_date, end_date)
@@ -112,7 +119,7 @@ def process_events():
             event_start_str = event_start.strftime("%Y-%m-%d")
             event_id = f"{event.name}_{event_start_str}"
 
-            if event_start <= now <= event_end and event_id not in processed_events:
+            if event_start <= NOW <= event_end and event_id not in processed_events:
                 status_code = send_notification(event.name + f":\n{event.location}", CHAT_ID)
                 if status_code == 200:
                     print(f"Success sending notification for event '{event.name}'")

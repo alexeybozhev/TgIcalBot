@@ -32,8 +32,8 @@ class TestEventProcessor(unittest.TestCase):
         self.assertIn("RRULE", result_dict)
         self.assertIn("EXRULE", result_dict)
 
-        self.assertEqual("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", result_dict["RRULE"])
-        self.assertEqual("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO", result_dict["EXRULE"])
+        self.assertEqual("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=11", result_dict["RRULE"])
+        self.assertEqual("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO;BYHOUR=11", result_dict["EXRULE"])
 
         self.assertEqual(datetime(2024, 12, 30, 11, 0), dtstart.datetime.replace(tzinfo=None))
 
@@ -72,7 +72,6 @@ class TestEventProcessor(unittest.TestCase):
             datetime(2025, 1, 28, 11, 0),
             datetime(2025, 1, 29, 11, 0),
             datetime(2025, 1, 30, 11, 0),
-            datetime(2025, 1, 31, 11, 0)
         ]
 
         self.assertEqual(len(expected_occurrences), len(occurrences))
