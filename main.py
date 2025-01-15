@@ -1,10 +1,10 @@
-import requests
 import json
-
-from ics import Calendar
-from datetime import datetime, timedelta
-from dateutil.rrule import rrulestr
+from datetime import datetime
 from pathlib import Path
+
+import requests
+from dateutil.rrule import rrulestr
+from ics import Calendar
 
 # Constants
 CURRENT_DIRECTORY = Path(__file__).parent
