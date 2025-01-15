@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+import pytz
 import requests
 from dateutil.rrule import rrulestr
 from ics import Calendar
@@ -28,8 +29,9 @@ def load_config_from_file(file_path):
 
 
 WEBHOOK_URL, CHAT_ID = load_config_from_file(CONFIG_JSON)
-NOW = datetime.now()
-print(f"NOW: {NOW}, WEBHOOK_URL: {WEBHOOK_URL}, CHAT_ID: {CHAT_ID}")
+tz_moscow = pytz.timezone("Europe/Moscow")
+now = datetime.now(tz_moscow)
+print(f"NOW: {now}, WEBHOOK_URL: {WEBHOOK_URL}, CHAT_ID: {CHAT_ID}")
 
 def load_processed_events(file_path):
     """Load the set of processed event IDs from a file."""
@@ -86,7 +88,7 @@ def expand_event(event, start_date, end_date):
     result = list()
     for occurrence in occurrences:
         print(f"Found occurrence: {occurrence}")
-        result.append(occurrence)
+        result.append(tz_moscow.localize(occurrence)) # todo FIX TZ - now only moscow is supported
 
     print(f"Occurrences between {start_date} and {end_date}: {len(occurrences)}")
     return result
@@ -109,8 +111,8 @@ def process_events():
 
     processed_events = load_processed_events(PROCESSED_EVENTS_FILE)
 
-    start_date = datetime(NOW.year, NOW.month, NOW.day)
-    end_date = datetime(NOW.year, NOW.month, NOW.day, 23, 59, 59)
+    start_date = datetime(now.year, now.month, now.day)
+    end_date = datetime(now.year, now.month, now.day, 23, 59, 59)
 
     for event in calendar.events:
         occurrences = expand_event(event, start_date, end_date)
@@ -119,7 +121,7 @@ def process_events():
             event_start_str = event_start.strftime("%Y-%m-%d")
             event_id = f"{event.name}_{event_start_str}"
 
-            if event_start <= NOW <= event_end and event_id not in processed_events:
+            if event_start <= now <= event_end and event_id not in processed_events:
                 status_code = send_notification(event.name + f":\n{event.location}", CHAT_ID)
                 if status_code == 200:
                     print(f"Success sending notification for event '{event.name}'")
